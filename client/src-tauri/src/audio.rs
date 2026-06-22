@@ -1,6 +1,5 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use std::sync::{Arc, Mutex, atomic::{AtomicBool, Ordering}};
-use std::fs::File;
 use std::io::Write;
 
 pub struct AudioCapture {
@@ -26,7 +25,7 @@ impl AudioCapture {
             .default_input_config()
             .map_err(|e| format!("Config error: {}", e))?;
 
-        println!("Audio device: {}", device.name().unwrap_or("?"));
+        println!("Audio device: {}", device.name().unwrap_or("?".to_string()));
         println!("Sample rate: {} Hz", config.sample_rate().0);
 
         let recording = self.recording.clone();
@@ -62,25 +61,22 @@ impl AudioCapture {
             return Err("No audio captured".to_string());
         }
 
-        // Write WAV to buffer
         let mut wav_bytes = Vec::new();
-        let sample_rate = 16000; // Whisper wants 16kHz
-        
-        // WAV header
-        let data_len = samples.len() * 2; // 16-bit samples
+        let sample_rate = 16000u32;
+        let data_len = samples.len() * 2;
         let file_len = 44 + data_len;
         
         wav_bytes.write_all(b"RIFF").unwrap();
         wav_bytes.write_all(&(file_len as u32 - 8).to_le_bytes()).unwrap();
         wav_bytes.write_all(b"WAVE").unwrap();
         wav_bytes.write_all(b"fmt ").unwrap();
-        wav_bytes.write_all(&16u32.to_le_bytes()).unwrap(); // chunk size
-        wav_bytes.write_all(&1u16.to_le_bytes()).unwrap();   // PCM
-        wav_bytes.write_all(&1u16.to_le_bytes()).unwrap();   // mono
-        wav_bytes.write_all(&(sample_rate as u32).to_le_bytes()).unwrap();
-        wav_bytes.write_all(&(sample_rate as u32 * 2).to_le_bytes()).unwrap(); // byte rate
-        wav_bytes.write_all(&2u16.to_le_bytes()).unwrap();   // block align
-        wav_bytes.write_all(&16u16.to_le_bytes()).unwrap();  // bits per sample
+        wav_bytes.write_all(&16u32.to_le_bytes()).unwrap();
+        wav_bytes.write_all(&1u16.to_le_bytes()).unwrap();
+        wav_bytes.write_all(&1u16.to_le_bytes()).unwrap();
+        wav_bytes.write_all(&sample_rate.to_le_bytes()).unwrap();
+        wav_bytes.write_all(&(sample_rate * 2).to_le_bytes()).unwrap();
+        wav_bytes.write_all(&2u16.to_le_bytes()).unwrap();
+        wav_bytes.write_all(&16u16.to_le_bytes()).unwrap();
         wav_bytes.write_all(b"data").unwrap();
         wav_bytes.write_all(&(data_len as u32).to_le_bytes()).unwrap();
         

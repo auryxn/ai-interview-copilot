@@ -12,7 +12,7 @@ struct AppState {
 fn start_capture(state: tauri::State<AppState>) -> Result<String, String> {
     let mut audio = state.audio.lock().map_err(|e| e.to_string())?;
     audio.start()?;
-    Ok("recording")
+    Ok("recording".to_string())
 }
 
 #[tauri::command]
@@ -22,13 +22,12 @@ async fn stop_and_send(state: tauri::State<'_, AppState>) -> Result<String, Stri
         audio.stop_and_get_wav()?
     };
 
-    // Send to FastAPI /transcribe
     let client = reqwest::Client::new();
     let part = reqwest::multipart::Part::bytes(wav)
-        .file_name("capture.wav")
+        .file_name("capture.wav".to_string())
         .mime_str("audio/wav")
         .map_err(|e| e.to_string())?;
-    let form = reqwest::multipart::Form::new().part("file", part);
+    let form = reqwest::multipart::Form::new().part("file".to_string(), part);
 
     let resp = client
         .post("http://127.0.0.1:3457/transcribe")
@@ -72,7 +71,9 @@ pub fn run() {
             #[cfg(debug_assertions)]
             {
                 let window = app.get_webview_window("main").unwrap();
-                window.open_devtools();
+                if let Some(w) = window {
+                    w.open_devtools();
+                }
             }
             Ok(())
         })
