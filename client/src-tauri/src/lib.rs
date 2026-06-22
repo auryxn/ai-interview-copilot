@@ -70,9 +70,8 @@ pub fn run() {
         .setup(|app| {
             #[cfg(debug_assertions)]
             {
-                let window = app.get_webview_window("main").unwrap();
-                if let Some(w) = window {
-                    w.open_devtools();
+                if let Some(window) = app.get_webview_window("main") {
+                    window.open_devtools();
                 }
             }
             Ok(())
